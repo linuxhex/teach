@@ -53,11 +53,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { login } from '@/api/auth.js'
 
-const phone = ref('')
-const password = ref('')
+const phone = ref('13800138000')
+const password = ref('123456')
 const showPassword = ref(false)
 const loading = ref(false)
 
@@ -90,6 +90,12 @@ async function handleLogin() {
 function goRegister() {
   uni.navigateTo({ url: '/pages/register/index' })
 }
+
+onMounted(() => {
+  setTimeout(() => {
+    handleLogin()
+  }, 500)
+})
 </script>
 
 <style scoped>
