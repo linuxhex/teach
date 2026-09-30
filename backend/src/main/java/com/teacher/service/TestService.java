@@ -131,8 +131,13 @@ public class TestService {
                 .total(questions.size())
                 .correctCount(correct)
                 .duration(req.getElapsed())
-                .answers(answers)
                 .build();
+        
+        // 设置每个answer的record引用
+        for (TestAnswer answer : answers) {
+            answer.setRecord(record);
+        }
+        record.setAnswers(answers);
         
         record = recordRepo.save(record);
         return new SubmitAnswerResponse(score, questions.size(), correct, record.getId());

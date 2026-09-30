@@ -1,5 +1,6 @@
 package com.teacher.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,6 +32,7 @@ public class TestAnswer {
     @Column(columnDefinition = "TEXT")
     private String aiFeedback;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "record_id")
     private TestRecord record;
