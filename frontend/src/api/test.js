@@ -4,9 +4,11 @@ export function getQuestions(mode) {
   return request(`/api/test/questions?mode=${mode}`).then(questions => {
     return questions.map(q => ({
       id: q.id,
+      questionType: q.questionType || '单选题',
       question: q.content,
       options: JSON.parse(q.options || '[]').map((opt, i) => `${String.fromCharCode(65 + i)}. ${opt}`),
       answer: q.answer,
+      referenceAnswer: q.referenceAnswer,
       analysis: q.analysis,
       difficulty: q.difficulty,
       module: q.module?.name || '',
