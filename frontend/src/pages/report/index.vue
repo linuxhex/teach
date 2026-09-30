@@ -106,26 +106,37 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import { analyzeTest } from '@/api/ai.js'
 
 const score = ref(0)
 const total = ref(8)
 const mode = ref('foundation')
 const expandedIdx = ref(-1)
+const recordId = ref(null)
 
 const questions = ref([])
+
+// AI 分析结果
+const aiAnalysis = ref(null)
+const aiLoading = ref(false)
 
 // 从 storage 读取答题数据
 const storedResult = uni.getStorageSync('lastTestResult')
 const storedAnswers = (storedResult && storedResult.answers) ? storedResult.answers : []
 const storedQuestions = (storedResult && storedResult.questions) ? storedResult.questions : []
+const storedRecordId = storedResult && storedResult.recordId
 uni.removeStorageSync('lastTestResult')
 
 const answers = ref(storedAnswers.length ? storedAnswers : Array(8).fill(-1))
 
 if (storedQuestions.length > 0) {
   questions.value = storedQuestions
+}
+
+if (storedRecordId) {
+  recordId.value = storedRecordId
 }
 
 const today = computed(() => {
@@ -145,6 +156,11 @@ const scoreComment = computed(() => {
 })
 
 const weakPoints = computed(() => {
+  // 优先使用 AI 分析结果
+  if (aiAnalysis.value && aiAnalysis.value.diagnosis && aiAnalysis.value.diagnosis.weakPoints) {
+    return aiAnalysis.value.diagnosis.weakPoints.map(wp => `${wp.module} · ${wp.knowledgePoint}`)
+  }
+  // 降级到本地计算
   const points = []
   questions.value.forEach((q, i) => {
     if (answers.value[i] !== q.answer) {
@@ -155,6 +171,11 @@ const weakPoints = computed(() => {
 })
 
 const diagnosisText = computed(() => {
+  // 优先使用 AI 分析结果
+  if (aiAnalysis.value && aiAnalysis.value.evaluation) {
+    return aiAnalysis.value.evaluation.conclusion || aiAnalysis.value.evaluation.detailedAnalysis
+  }
+  // 降级到本地计算
   if (score.value >= 80) {
     return '各知识点掌握良好，基础扎实。建议挑战更高难度题目，进一步提升综合解题能力。'
   } else if (score.value >= 60) {
@@ -191,13 +212,30 @@ function retry() {
 }
 
 // 接收页面参数
-onLoad((options) => {
+onLoad(async (options) => {
   const opts = options || {}
   score.value = Number(opts.score) || 0
   total.value = Number(opts.total) || 8
   mode.value = opts.mode || 'foundation'
   if (!answers.value.length || answers.value.every(a => a === -1)) {
     answers.value = Array(total.value).fill(-1)
+  }
+  
+  // 调用 AI 分析
+  if (recordId.value) {
+    aiLoading.value = true
+    try {
+      console.log('开始调用 AI 分析, recordId:', recordId.value)
+      const result = await analyzeTest(recordId.value)
+      aiAnalysis.value = result
+      console.log('AI 分析结果:', result)
+    } catch (e) {
+      console.error('AI 分析失败，使用本地分析:', e)
+    } finally {
+      aiLoading.value = false
+    }
+  } else {
+    console.log('没有 recordId，跳过 AI 分析')
   }
 })
 </script>

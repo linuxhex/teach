@@ -58,25 +58,40 @@
             <text class="tag module-tag">{{ currentQuestion.module }}</text>
             <text class="tag knowledge-tag">{{ currentQuestion.knowledgePoint }}</text>
             <text class="tag difficulty-tag">{{ currentQuestion.difficulty }}</text>
+            <text v-if="currentQuestion.questionType === '主观题'" class="tag subjective-tag">主观题</text>
           </view>
           <text class="question-text">{{ currentQuestion.question }}</text>
         </view>
 
-        <view class="options-list">
+        <!-- 客观题：选项列表 -->
+        <view v-if="currentQuestion.questionType !== '主观题'" class="options-list">
           <view
             v-for="(option, idx) in currentQuestion.options"
             :key="idx"
             class="option-item"
-            :class="{ 'option-selected': answers[currentIndex] === idx, 'option-active': activeOption === idx }"
+            :class="{ 'option-selected': answers[currentIndex]?.choice === idx, 'option-active': activeOption === idx }"
             @click="selectOption(idx)"
             @touchstart="activeOption = idx"
             @touchend="activeOption = -1"
           >
-            <view class="option-letter" :class="{ 'letter-selected': answers[currentIndex] === idx }">
+            <view class="option-letter" :class="{ 'letter-selected': answers[currentIndex]?.choice === idx }">
               {{ String.fromCharCode(65 + idx) }}
             </view>
             <text class="option-text">{{ option.slice(3) }}</text>
           </view>
+        </view>
+
+        <!-- 主观题：文本输入 -->
+        <view v-else class="subjective-answer">
+          <text class="answer-label">你的解答：</text>
+          <textarea
+            class="answer-textarea"
+            v-model="answers[currentIndex].text"
+            placeholder="请输入你的解答过程..."
+            :maxlength="2000"
+            auto-height
+          />
+          <text class="char-count">{{ (answers[currentIndex].text || '').length }}/2000</text>
         </view>
       </scroll-view>
 
@@ -165,7 +180,16 @@ const modeDesc = computed(() => {
 
 const currentQuestion = computed(() => questions.value[currentIndex.value] || {})
 
-const answeredCount = computed(() => answers.value.filter(a => a !== -1).length)
+const answeredCount = computed(() => {
+  return answers.value.filter(a => {
+    if (typeof a === 'object' && a !== null) {
+      // 主观题：检查是否有文本答案
+      return a.text && a.text.trim().length > 0
+    }
+    // 客观题：检查是否有选择
+    return a !== -1 && a !== null && a !== undefined
+  }).length
+})
 
 function goBack() {
   uni.navigateBack({ fail: () => uni.switchTab({ url: '/pages/index/index' }) })
@@ -176,7 +200,13 @@ async function startTest() {
   try {
     const qs = await getQuestions(mode.value)
     questions.value = qs
-    answers.value = Array(qs.length).fill(-1)
+    // 初始化答案数组：客观题用-1，主观题用对象
+    answers.value = qs.map(q => {
+      if (q.questionType === '主观题') {
+        return { text: '' }
+      }
+      return -1
+    })
     phase.value = 'answering'
     elapsed.value = 0
     timer = setInterval(() => { elapsed.value++ }, 1000)
@@ -217,11 +247,24 @@ async function submitTest() {
   loading.value = true
 
   try {
-    // 构建答案数据，包含题目ID和用户答案
-    const answerData = questions.value.map((q, i) => ({
-      questionId: q.id,
-      answer: answers.value[i]
-    }))
+    // 构建答案数据，区分客观题和主观题
+    const answerData = questions.value.map((q, i) => {
+      const answerItem = {
+        questionId: q.id
+      }
+      
+      if (q.questionType === '主观题') {
+        // 主观题：发送文本答案
+        answerItem.textAnswer = answers.value[i].text || ''
+        answerItem.answer = null
+      } else {
+        // 客观题：发送选项索引
+        answerItem.answer = answers.value[i]
+        answerItem.textAnswer = null
+      }
+      
+      return answerItem
+    })
 
     const result = await submitTestAPI({
       answers: answerData,
@@ -233,7 +276,8 @@ async function submitTest() {
       total: result.total,
       mode: mode.value,
       answers: [...answers.value],
-      questions: questions.value
+      questions: questions.value,
+      recordId: result.recordId
     })
 
     uni.navigateTo({
@@ -253,7 +297,8 @@ async function submitTest() {
       total: questions.value.length,
       mode: mode.value,
       answers: [...answers.value],
-      questions: questions.value
+      questions: questions.value,
+      recordId: null
     })
 
     uni.navigateTo({
@@ -315,7 +360,15 @@ onLoad((options) => {
 .module-tag { background: #eef3ff; color: #4A7BF7; }
 .knowledge-tag { background: #f0f9f0; color: #34C759; }
 .difficulty-tag { background: #fff5eb; color: #FF9500; }
+.subjective-tag { background: #fff0f5; color: #AF52DE; }
 .question-text { font-size: 32rpx; color: #1a1a1a; line-height: 1.7; font-weight: 500; }
+
+/* 主观题答题区 */
+.subjective-answer { margin-top: 24rpx; background: #fff; border-radius: 16rpx; padding: 24rpx; }
+.answer-label { font-size: 28rpx; color: #666; margin-bottom: 16rpx; display: block; }
+.answer-textarea { width: 100%; min-height: 300rpx; padding: 20rpx; border: 2rpx solid #e8ecf1; border-radius: 12rpx; font-size: 28rpx; color: #333; line-height: 1.6; resize: vertical; }
+.answer-textarea:focus { border-color: #4A7BF7; outline: none; }
+.char-count { font-size: 24rpx; color: #999; text-align: right; margin-top: 8rpx; display: block; }
 
 .options-list { margin-top: 8rpx; }
 .option-item { display: flex; align-items: center; background: #fff; border-radius: 16rpx; padding: 28rpx 24rpx; margin-bottom: 16rpx; border: 2rpx solid #e8ecf1; transition: all 0.2s ease; }

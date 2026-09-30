@@ -33,6 +33,9 @@ public class Question {
     private Integer answer;
 
     @Column(columnDefinition = "TEXT")
+    private String referenceAnswer;
+
+    @Column(columnDefinition = "TEXT")
     private String analysis;
 
     @ManyToOne

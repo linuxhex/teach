@@ -65,6 +65,27 @@ INSERT INTO questions (question_type, difficulty, content, options, answer, anal
 INSERT INTO questions (question_type, difficulty, content, options, answer, analysis, module_id, knowledge_point_id) VALUES
 ('单选题', '较难', '等比数列{an}中，a1=1，a4=8，则公比q=', '["2","-2","2或-2","4"]', 0, 'a4=a1×q³，8=1×q³，q³=8，q=2', 3, 8);
 
+-- 主观题（4道，覆盖核心模块）
+INSERT INTO questions (question_type, difficulty, content, options, answer, reference_answer, analysis, module_id, knowledge_point_id) VALUES
+('主观题', '中等', '已知函数f(x)=x³-3x²+2，求：(1)f(x)的单调区间；(2)f(x)的极值。', NULL, NULL, 
+'(1)单调递增区间：(-∞,0)和(2,+∞)；单调递减区间：(0,2)。(2)极大值f(0)=2，极小值f(2)=-2。',
+'f''(x)=3x²-6x=3x(x-2)，令f''(x)=0得x=0或x=2。当x<0或x>2时f''(x)>0，函数递增；当0<x<2时f''(x)<0，函数递减。', 4, 12);
+
+INSERT INTO questions (question_type, difficulty, content, options, answer, reference_answer, analysis, module_id, knowledge_point_id) VALUES
+('主观题', '中等', '在△ABC中，已知a=5，b=7，A=30°，求sinB和边c的值。', NULL, NULL,
+'sinB=7/10，c=√39或c=5√3。',
+'由正弦定理a/sinA=b/sinB，得sinB=bsinA/a=7×(1/2)/5=7/10。由余弦定理a²=b²+c²-2bccosA，代入得25=49+c²-7√3c，解得c=√39或c=5√3。', 2, 5);
+
+INSERT INTO questions (question_type, difficulty, content, options, answer, reference_answer, analysis, module_id, knowledge_point_id) VALUES
+('主观题', '较难', '已知等差数列{an}的前n项和为Sn，a3=7，S4=24，求：(1)通项公式an；(2)前n项和Sn。', NULL, NULL,
+'(1)an=2n+1；(2)Sn=n²+2n。',
+'设首项为a1，公差为d。由a3=a1+2d=7，S4=4a1+6d=24，解得a1=3，d=2。所以an=a1+(n-1)d=3+2(n-1)=2n+1，Sn=na1+n(n-1)d/2=3n+n(n-1)=n²+2n。', 3, 7);
+
+INSERT INTO questions (question_type, difficulty, content, options, answer, reference_answer, analysis, module_id, knowledge_point_id) VALUES
+('主观题', '基础', '证明：函数f(x)=x²在[0,+∞)上是单调递增函数。', NULL, NULL,
+'证明：任取x1,x2∈[0,+∞)，设x1<x2，则f(x1)-f(x2)=x1²-x2²=(x1+x2)(x1-x2)。因为x1,x2≥0且x1<x2，所以x1+x2>0，x1-x2<0，故f(x1)-f(x2)<0，即f(x1)<f(x2)，所以f(x)在[0,+∞)上单调递增。',
+'使用单调性定义证明，任取两点x1<x2，计算f(x1)-f(x2)并判断符号。', 1, 2);
+
 -- 资料（7份）
 INSERT INTO materials (title, type, purpose, stage, version, volume, chapter, description, audience, tags, price, original_price, match_rate) VALUES
 ('函数章节系统讲解', '讲解类', '章节体系', '同步学习', '人教A版', '必修一', '第一章', '系统讲解函数的概念、性质、图像，适合高一同步学习', '高一学生', '函数,基础,系统', 99.00, 199.00, 95);

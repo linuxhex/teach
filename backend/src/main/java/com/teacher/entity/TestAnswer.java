@@ -21,7 +21,15 @@ public class TestAnswer {
 
     private Integer userAnswer;
 
+    @Column(columnDefinition = "TEXT")
+    private String textAnswer;
+
     private Boolean isCorrect;
+
+    private Integer aiScore;
+
+    @Column(columnDefinition = "TEXT")
+    private String aiFeedback;
 
     @ManyToOne
     @JoinColumn(name = "record_id")

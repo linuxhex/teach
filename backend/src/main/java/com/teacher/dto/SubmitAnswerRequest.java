@@ -13,5 +13,6 @@ public class SubmitAnswerRequest {
     public static class AnswerItem {
         private Long questionId;
         private Integer answer;
+        private String textAnswer;
     }
 }

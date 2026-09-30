@@ -4,3 +4,24 @@ dist/
 *.log
 .env
 .env.local
+
+# Backend
+backend/target/
+backend/.mvn/
+backend/*.iml
+backend/.idea/
+
+# AI Configuration (sensitive)
+.teacher/
+**/ai-config.properties
+*.properties.local
+
+# Test artifacts
+test-screenshots/
+TEST_REPORT.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
