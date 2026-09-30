@@ -6,7 +6,12 @@ import java.util.List;
 
 @Data
 public class SubmitAnswerRequest {
-    private Long testId;
-    private List<Integer> answers;
+    private List<AnswerItem> answers;
     private Integer elapsed;
+
+    @Data
+    public static class AnswerItem {
+        private Long questionId;
+        private Integer answer;
+    }
 }

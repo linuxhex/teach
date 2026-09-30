@@ -124,7 +124,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getQuestions, submitTest } from '@/api/test.js'
+import { getQuestions, submitTest as submitTestAPI } from '@/api/test.js'
 
 const mode = ref('foundation')
 const phase = ref('startScreen')
@@ -217,8 +217,14 @@ async function submitTest() {
   loading.value = true
 
   try {
-    const result = await submitTest({
-      answers: answers.value,
+    // 构建答案数据，包含题目ID和用户答案
+    const answerData = questions.value.map((q, i) => ({
+      questionId: q.id,
+      answer: answers.value[i]
+    }))
+
+    const result = await submitTestAPI({
+      answers: answerData,
       elapsed: elapsed.value
     })
 
@@ -234,6 +240,7 @@ async function submitTest() {
       url: `/pages/report/index?score=${result.score}&total=${result.total}&mode=${mode.value}`
     })
   } catch (e) {
+    console.error('提交失败', e)
     // 如果 API 失败，本地计算分数
     let correct = 0
     questions.value.forEach((q, i) => {

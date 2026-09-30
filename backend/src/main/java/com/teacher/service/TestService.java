@@ -34,15 +34,39 @@ public class TestService {
     }
 
     public SubmitAnswerResponse submit(Long userId, SubmitAnswerRequest req) {
-        List<Question> questions = questionRepo.findAllById(
-                req.getAnswers().stream().map(i -> (long) (i + 1)).collect(Collectors.toList())
-        );
+        List<Long> questionIds = req.getAnswers().stream()
+                .map(SubmitAnswerRequest.AnswerItem::getQuestionId)
+                .collect(Collectors.toList());
+        
+        List<Question> questions = questionRepo.findAllById(questionIds);
+        
         int correct = 0;
         List<TestAnswer> answers = new ArrayList<>();
-        for (int i = 0; i < req.getAnswers().size(); i++) {
-            // 简化逻辑
+        
+        for (SubmitAnswerRequest.AnswerItem answerItem : req.getAnswers()) {
+            Question question = questions.stream()
+                    .filter(q -> q.getId().equals(answerItem.getQuestionId()))
+                    .findFirst()
+                    .orElse(null);
+            
+            if (question != null) {
+                boolean isCorrect = answerItem.getAnswer() != null && 
+                                   answerItem.getAnswer().equals(question.getAnswer());
+                if (isCorrect) {
+                    correct++;
+                }
+                
+                TestAnswer testAnswer = TestAnswer.builder()
+                        .question(question)
+                        .userAnswer(answerItem.getAnswer())
+                        .isCorrect(isCorrect)
+                        .build();
+                answers.add(testAnswer);
+            }
         }
+        
         int score = questions.isEmpty() ? 0 : Math.round(correct * 100f / questions.size());
+        
         TestRecord record = TestRecord.builder()
                 .user(User.builder().id(userId).build())
                 .mode("foundation")
@@ -50,7 +74,9 @@ public class TestService {
                 .total(questions.size())
                 .correctCount(correct)
                 .duration(req.getElapsed())
+                .answers(answers)
                 .build();
+        
         record = recordRepo.save(record);
         return new SubmitAnswerResponse(score, questions.size(), correct, record.getId());
     }

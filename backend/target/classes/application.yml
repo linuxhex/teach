@@ -28,3 +28,5 @@ app:
   jwt:
     secret: "teacher-ai-diagnosis-secret-key-2024-very-long-secret"
     expiration: 86400000
+  ai:
+    enabled: false

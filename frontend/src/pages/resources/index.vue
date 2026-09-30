@@ -177,8 +177,8 @@ const statusBarHeight = ref(44)
 const searchText = ref('')
 const selectedStage = ref('sync')
 const filterExpanded = ref(true)
-const selectedVersion = ref('人教A版')
-const selectedVolume = ref('必修一')
+const selectedVersion = ref('全部')
+const selectedVolume = ref('全部')
 const selectedChapter = ref('全部')
 const selectedType = ref('全部')
 const selectedPurpose = ref('全部')
@@ -189,8 +189,8 @@ const learningStages = ref([
   { id: 'summer', icon: '☀️', name: '暑假', desc: '预习提升' },
   { id: 'winter', icon: '❄️', name: '寒假', desc: '查漏补缺' }
 ])
-const textbookVersions = ref(['人教A版', '人教B版', '北师大版'])
-const textbookVolumes = ref(['必修一', '必修二', '选择性必修一', '选择性必修二', '全一册'])
+const textbookVersions = ref(['全部', '人教A版', '人教B版', '北师大版'])
+const textbookVolumes = ref(['全部', '必修一', '必修二', '选择性必修一', '选择性必修二', '全一册'])
 const chapters = ref(['全部', '第一章', '第二章', '第三章', '第四章'])
 const materialTypes = ref(['全部', '讲解类', '刷题类', '功能类'])
 const materialPurposes = ref(['全部', '章节体系', '专题突破', '工具资料'])
@@ -221,18 +221,18 @@ const filteredMaterials = computed(() => {
     // 资料作用筛选
     if (selectedPurpose.value !== '全部' && item.purpose !== selectedPurpose.value) return false
     // 教材版本筛选
-    if (selectedVersion.value !== '人教A版') {
-      const versionMatch = item.tags.some(t => t.includes(selectedVersion.value)) || item.title.includes(selectedVersion.value)
+    if (selectedVersion.value !== '全部') {
+      const versionMatch = item.version === selectedVersion.value || item.tags.some(t => t.includes(selectedVersion.value)) || item.title.includes(selectedVersion.value)
       if (!versionMatch) return false
     }
     // 册次筛选
-    if (selectedVolume.value) {
-      const volumeMatch = item.title.includes(selectedVolume.value) || item.tags.some(t => t.includes(selectedVolume.value))
+    if (selectedVolume.value !== '全部') {
+      const volumeMatch = item.volume === selectedVolume.value || item.title.includes(selectedVolume.value) || item.tags.some(t => t.includes(selectedVolume.value))
       if (!volumeMatch) return false
     }
     // 章节筛选
     if (selectedChapter.value !== '全部') {
-      const chapterMatch = item.tags.some(t => t.includes(selectedChapter.value)) || item.title.includes(selectedChapter.value)
+      const chapterMatch = item.chapter === selectedChapter.value || item.tags.some(t => t.includes(selectedChapter.value)) || item.title.includes(selectedChapter.value)
       if (!chapterMatch) return false
     }
     // 搜索关键词
