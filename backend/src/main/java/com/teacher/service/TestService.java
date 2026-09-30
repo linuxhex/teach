@@ -34,9 +34,9 @@ public class TestService {
     public List<Question> getQuestions(String mode, Long userId) {
         List<Question> all = questionRepo.findAll();
         Collections.shuffle(all);
-        // 确保包含主观题和客观题
+        // 确保包含主观题和客观题（单选+多选）
         List<Question> objective = all.stream()
-                .filter(q -> "单选题".equals(q.getQuestionType()))
+                .filter(q -> "单选题".equals(q.getQuestionType()) || "多选题".equals(q.getQuestionType()))
                 .collect(Collectors.toList());
         List<Question> subjective = all.stream()
                 .filter(q -> "主观题".equals(q.getQuestionType()))
@@ -46,8 +46,8 @@ public class TestService {
         Collections.shuffle(subjective);
         
         List<Question> result = new ArrayList<>();
-        result.addAll(objective.subList(0, Math.min(6, objective.size())));
-        result.addAll(subjective.subList(0, Math.min(2, subjective.size())));
+        result.addAll(objective.subList(0, Math.min(15, objective.size())));
+        result.addAll(subjective.subList(0, Math.min(5, subjective.size())));
         Collections.shuffle(result);
         return result;
     }
