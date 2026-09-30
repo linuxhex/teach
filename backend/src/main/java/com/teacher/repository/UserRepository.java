@@ -1,0 +1,11 @@
+package com.teacher.repository;
+
+import com.teacher.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByPhone(String phone);
+    Optional<User> findByPhoneAndPassword(String phone, String password);
+}
