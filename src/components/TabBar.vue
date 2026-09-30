@@ -26,7 +26,7 @@ const props = defineProps({
 
 const tabs = [
   { key: 'index', label: '首页', icon: '⌂', path: '/pages/index/index' },
-  { key: 'assessment', label: '测评', icon: '✎', path: '/pages/assessment/index' },
+  { key: 'assessment', label: '测评', icon: '', path: '/pages/assessment/index' },
   { key: 'resources', label: '资料库', icon: '▤', path: '/pages/resources/index' },
   { key: 'profile', label: '我的', icon: '○', path: '/pages/profile/index' }
 ]

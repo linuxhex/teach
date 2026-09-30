@@ -38,39 +38,6 @@
         </view>
       </view>
 
-      <!-- 快捷入口 -->
-      <view class="section">
-        <view class="section-header">
-          <text class="section-title">快捷入口</text>
-        </view>
-        <view class="quick-access">
-          <view class="quick-item" @click="goTest('foundation')">
-            <text class="quick-icon">📝</text>
-            <text class="quick-label">功底测评</text>
-          </view>
-          <view class="quick-item" @click="goTest('chapter')">
-            <text class="quick-icon">📖</text>
-            <text class="quick-label">章节练习</text>
-          </view>
-          <view class="quick-item" @click="goTest('topic')">
-            <text class="quick-icon">🎯</text>
-            <text class="quick-label">专题突破</text>
-          </view>
-          <view class="quick-item" @click="goResources">
-            <text class="quick-icon">📚</text>
-            <text class="quick-label">资料库</text>
-          </view>
-          <view class="quick-item" @click="goReport">
-            <text class="quick-icon"></text>
-            <text class="quick-label">学习报告</text>
-          </view>
-          <view class="quick-item" @click="goAdmin">
-            <text class="quick-icon">️</text>
-            <text class="quick-label">管理后台</text>
-          </view>
-        </view>
-      </view>
-
       <!-- 4. 测评入口 -->
       <view class="section">
         <view class="test-entries">
