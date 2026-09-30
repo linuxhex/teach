@@ -53,8 +53,42 @@
 </template>
 
 <script setup>
-import { userInfo } from '@/data/mock.js'
+import { ref, onMounted } from 'vue'
+import { getProgress } from '@/api/user.js'
+import { getProfile } from '@/api/auth.js'
 import TabBar from '@/components/TabBar.vue'
+
+const userInfo = ref({
+  name: uni.getStorageSync('userName') || '用户',
+  grade: uni.getStorageSync('userGrade') || '高一',
+  targetScore: 120,
+  testCount: 0,
+  masteredTypes: 0,
+  studyDays: 0
+})
+
+onMounted(async () => {
+  try {
+    const [profile, progress] = await Promise.all([
+      getProfile().catch(() => null),
+      getProgress().catch(() => null)
+    ])
+
+    if (profile) {
+      userInfo.value.name = profile.name || userInfo.value.name
+      userInfo.value.grade = profile.grade || userInfo.value.grade
+      userInfo.value.targetScore = profile.targetScore || 120
+    }
+
+    if (progress) {
+      userInfo.value.testCount = progress.testCount || 0
+      userInfo.value.masteredTypes = progress.masteredTypes || 0
+      userInfo.value.studyDays = progress.studyDays || 0
+    }
+  } catch (e) {
+    console.error('加载用户信息失败', e)
+  }
+})
 
 const menuList = [
   { title: '我的测评', icon: '📋', action: 'navigate', url: '/pages/assessment/index' },

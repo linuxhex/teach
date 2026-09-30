@@ -168,16 +168,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import {
-  learningStages,
-  textbookVersions,
-  textbookVolumes,
-  chapters,
-  materialTypes,
-  materialPurposes,
-  materials
-} from '@/data/mock.js'
+import { ref, computed, onMounted } from 'vue'
+import { getMaterials, getMaterialFilters } from '@/api/material.js'
 import TabBar from '@/components/TabBar.vue'
 
 const statusBarHeight = ref(44)
@@ -191,19 +183,49 @@ const selectedChapter = ref('全部')
 const selectedType = ref('全部')
 const selectedPurpose = ref('全部')
 
+const learningStages = ref([
+  { id: 'sync', icon: '📘', name: '同步学习', desc: '跟随学校进度' },
+  { id: 'review', icon: '🎯', name: '高三复习', desc: '系统复习备考' },
+  { id: 'summer', icon: '☀️', name: '暑假', desc: '预习提升' },
+  { id: 'winter', icon: '❄️', name: '寒假', desc: '查漏补缺' }
+])
+const textbookVersions = ref(['人教A版', '人教B版', '北师大版'])
+const textbookVolumes = ref(['必修一', '必修二', '选择性必修一', '选择性必修二', '全一册'])
+const chapters = ref(['全部', '第一章', '第二章', '第三章', '第四章'])
+const materialTypes = ref(['全部', '讲解类', '刷题类', '功能类'])
+const materialPurposes = ref(['全部', '章节体系', '专题突破', '工具资料'])
+
+const materials = ref([])
+
+onMounted(async () => {
+  try {
+    const [mats, filters] = await Promise.all([
+      getMaterials().catch(() => []),
+      getMaterialFilters().catch(() => null)
+    ])
+    materials.value = mats
+    if (filters) {
+      if (filters.versions) textbookVersions.value = filters.versions
+      if (filters.types) materialTypes.value = ['全部', ...filters.types]
+      if (filters.purposes) materialPurposes.value = ['全部', ...filters.purposes]
+    }
+  } catch (e) {
+    console.error('加载资料失败', e)
+  }
+})
+
 const filteredMaterials = computed(() => {
-  return materials.filter(item => {
+  return materials.value.filter(item => {
     // 资料类型筛选
     if (selectedType.value !== '全部' && item.type !== selectedType.value) return false
     // 资料作用筛选
     if (selectedPurpose.value !== '全部' && item.purpose !== selectedPurpose.value) return false
-    // 教材版本筛选（匹配 tags 中是否包含版本关键词，或按 title 匹配）
+    // 教材版本筛选
     if (selectedVersion.value !== '人教A版') {
-      // 默认人教A版不过滤，其他版本按字面匹配 tags
       const versionMatch = item.tags.some(t => t.includes(selectedVersion.value)) || item.title.includes(selectedVersion.value)
       if (!versionMatch) return false
     }
-    // 册次筛选（按字面匹配 title 或 tags）
+    // 册次筛选
     if (selectedVolume.value) {
       const volumeMatch = item.title.includes(selectedVolume.value) || item.tags.some(t => t.includes(selectedVolume.value))
       if (!volumeMatch) return false
@@ -212,16 +234,6 @@ const filteredMaterials = computed(() => {
     if (selectedChapter.value !== '全部') {
       const chapterMatch = item.tags.some(t => t.includes(selectedChapter.value)) || item.title.includes(selectedChapter.value)
       if (!chapterMatch) return false
-    }
-    // 学习阶段影响册次范围
-    if (selectedStage.value === 'sync') {
-      // 同步学习 → 只显示必修一、必修二相关内容
-      const syncMatch = item.title.includes('必修一') || item.title.includes('必修二') || item.tags.some(t => t.includes('必修'))
-      // 不强制过滤，但优先展示
-    } else if (selectedStage.value === 'review') {
-      // 高三复习 → 全部显示
-    } else if (selectedStage.value === 'summer') {
-      // 暑假 → 选择性必修相关
     }
     // 搜索关键词
     if (searchText.value) {

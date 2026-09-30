@@ -53,14 +53,16 @@
 
 <script setup>
 import { ref } from 'vue'
+import { register } from '@/api/auth.js'
 
 const role = ref('student')
 const name = ref('')
 const phone = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const loading = ref(false)
 
-function handleRegister() {
+async function handleRegister() {
   if (!name.value.trim()) {
     uni.showToast({ title: '请输入姓名', icon: 'none' })
     return
@@ -78,10 +80,23 @@ function handleRegister() {
     return
   }
 
-  uni.showToast({ title: '注册成功', icon: 'success' })
-  setTimeout(() => {
-    uni.navigateBack()
-  }, 1500)
+  loading.value = true
+  try {
+    await register({
+      name: name.value,
+      phone: phone.value,
+      password: password.value,
+      grade: '高一'
+    })
+    uni.showToast({ title: '注册成功', icon: 'success' })
+    setTimeout(() => {
+      uni.navigateBack()
+    }, 1500)
+  } catch (e) {
+    uni.showToast({ title: e.message || '注册失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
 }
 
 function goLogin() {

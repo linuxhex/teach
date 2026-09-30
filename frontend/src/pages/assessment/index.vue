@@ -125,15 +125,33 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { userInfo, knowledgeModules, testRecords, diagnosisRules } from '@/data/mock.js'
+import { ref, computed, onMounted } from 'vue'
+import { getKnowledgeMap } from '@/api/user.js'
+import { getRecords } from '@/api/test.js'
 import TabBar from '@/components/TabBar.vue'
 
 const activeTab = ref('全部')
 const tabs = ['全部', '功能测评', '章节测试', '专题测试']
+const knowledgeModules = ref([])
+const testRecords = ref([])
+
+onMounted(async () => {
+  try {
+    const [modules, records] = await Promise.all([
+      getKnowledgeMap().catch(() => []),
+      getRecords().catch(() => [])
+    ])
+    knowledgeModules.value = modules
+    testRecords.value = records
+  } catch (e) {
+    console.error('加载数据失败', e)
+  }
+})
 
 const ringBg = computed(() => {
-  const pct = 62
+  const pct = knowledgeModules.value.length > 0
+    ? Math.round(knowledgeModules.value.reduce((sum, m) => sum + m.percent, 0) / knowledgeModules.value.length)
+    : 0
   return `conic-gradient(#4A7BF7 ${pct * 3.6}deg, #E8E8E8 ${pct * 3.6}deg)`
 })
 
@@ -146,8 +164,8 @@ const statusList = [
 ]
 
 const filteredRecords = computed(() => {
-  if (activeTab.value === '全部') return testRecords
-  return testRecords.filter(r => r.type === activeTab.value)
+  if (activeTab.value === '全部') return testRecords.value
+  return testRecords.value.filter(r => r.type === activeTab.value)
 })
 
 function goTest(mode) {

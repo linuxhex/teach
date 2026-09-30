@@ -108,20 +108,25 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { testQuestions } from '@/data/mock.js'
 
 const score = ref(0)
 const total = ref(8)
 const mode = ref('foundation')
 const expandedIdx = ref(-1)
 
-const questions = ref(testQuestions)
+const questions = ref([])
 
-// 从 storage 读取答题数据（同步，在组件创建时立即执行）
+// 从 storage 读取答题数据
 const storedResult = uni.getStorageSync('lastTestResult')
 const storedAnswers = (storedResult && storedResult.answers) ? storedResult.answers : []
+const storedQuestions = (storedResult && storedResult.questions) ? storedResult.questions : []
 uni.removeStorageSync('lastTestResult')
+
 const answers = ref(storedAnswers.length ? storedAnswers : Array(8).fill(-1))
+
+if (storedQuestions.length > 0) {
+  questions.value = storedQuestions
+}
 
 const today = computed(() => {
   const d = new Date()

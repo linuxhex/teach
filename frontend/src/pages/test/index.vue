@@ -124,19 +124,20 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { testQuestions } from '@/data/mock.js'
+import { getQuestions, submitTest } from '@/api/test.js'
 
 const mode = ref('foundation')
 const phase = ref('startScreen')
 const currentIndex = ref(0)
-const answers = ref(Array(8).fill(-1))
+const answers = ref([])
 const elapsed = ref(0)
 const showConfirm = ref(false)
 const activeOption = ref(-1)
+const loading = ref(false)
 
 let timer = null
 
-const questions = ref(testQuestions)
+const questions = ref([])
 
 const modeTitle = computed(() => {
   const map = { foundation: '功底测评', chapter: '章节测试', topic: '专题测试' }
@@ -162,7 +163,7 @@ const modeDesc = computed(() => {
   return map[mode.value] || ''
 })
 
-const currentQuestion = computed(() => questions.value[currentIndex.value])
+const currentQuestion = computed(() => questions.value[currentIndex.value] || {})
 
 const answeredCount = computed(() => answers.value.filter(a => a !== -1).length)
 
@@ -170,10 +171,20 @@ function goBack() {
   uni.navigateBack({ fail: () => uni.switchTab({ url: '/pages/index/index' }) })
 }
 
-function startTest() {
-  phase.value = 'answering'
-  elapsed.value = 0
-  timer = setInterval(() => { elapsed.value++ }, 1000)
+async function startTest() {
+  loading.value = true
+  try {
+    const qs = await getQuestions(mode.value)
+    questions.value = qs
+    answers.value = Array(qs.length).fill(-1)
+    phase.value = 'answering'
+    elapsed.value = 0
+    timer = setInterval(() => { elapsed.value++ }, 1000)
+  } catch (e) {
+    uni.showToast({ title: '加载题目失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
 }
 
 function selectOption(idx) {
@@ -200,23 +211,50 @@ function confirmExit() {
   })
 }
 
-function submitTest() {
+async function submitTest() {
   clearInterval(timer)
   showConfirm.value = false
-  let correct = 0
-  questions.value.forEach((q, i) => {
-    if (answers.value[i] === q.answer) correct++
-  })
-  const score = Math.round(correct / questions.value.length * 100)
-  uni.setStorageSync('lastTestResult', {
-    score,
-    total: questions.value.length,
-    mode: mode.value,
-    answers: [...answers.value]
-  })
-  uni.navigateTo({
-    url: `/pages/report/index?score=${score}&total=${questions.value.length}&mode=${mode.value}`
-  })
+  loading.value = true
+
+  try {
+    const result = await submitTest({
+      answers: answers.value,
+      elapsed: elapsed.value
+    })
+
+    uni.setStorageSync('lastTestResult', {
+      score: result.score,
+      total: result.total,
+      mode: mode.value,
+      answers: [...answers.value],
+      questions: questions.value
+    })
+
+    uni.navigateTo({
+      url: `/pages/report/index?score=${result.score}&total=${result.total}&mode=${mode.value}`
+    })
+  } catch (e) {
+    // 如果 API 失败，本地计算分数
+    let correct = 0
+    questions.value.forEach((q, i) => {
+      if (answers.value[i] === q.answer) correct++
+    })
+    const score = Math.round(correct / questions.value.length * 100)
+
+    uni.setStorageSync('lastTestResult', {
+      score,
+      total: questions.value.length,
+      mode: mode.value,
+      answers: [...answers.value],
+      questions: questions.value
+    })
+
+    uni.navigateTo({
+      url: `/pages/report/index?score=${score}&total=${questions.value.length}&mode=${mode.value}`
+    })
+  } finally {
+    loading.value = false
+  }
 }
 
 function formatTime(s) {

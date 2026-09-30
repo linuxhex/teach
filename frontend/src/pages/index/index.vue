@@ -160,11 +160,28 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { userInfo, testRecords, studySuggestions, recommendedMaterials } from '@/data/mock.js'
+import { ref, computed, onMounted } from 'vue'
+import { getProgress } from '@/api/user.js'
+import { getRecords } from '@/api/test.js'
+import { getMaterials } from '@/api/material.js'
 import TabBar from '@/components/TabBar.vue'
 
 const statusBarHeight = ref(20)
+const userInfo = ref({
+  name: uni.getStorageSync('userName') || '用户',
+  grade: uni.getStorageSync('userGrade') || '高一'
+})
+const latestTest = ref({
+  title: '暂无测评',
+  date: '',
+  conclusion: '完成一次测评查看结果',
+  mastered: 0
+})
+const studySuggestions = ref([
+  { id: 1, tag: '推荐', tagColor: '#4A7BF7', title: '完成功底测评，全面检测知识掌握' },
+  { id: 2, tag: '薄弱', tagColor: '#FF9500', title: '针对薄弱知识点进行专项练习' }
+])
+const recommendedMaterials = ref([])
 
 // 获取系统状态栏高度
 uni.getSystemInfo({
@@ -173,8 +190,25 @@ uni.getSystemInfo({
   }
 })
 
-// 最近一次测评
-const latestTest = computed(() => testRecords[0])
+onMounted(async () => {
+  try {
+    const [records, materials] = await Promise.all([
+      getRecords().catch(() => []),
+      getMaterials().catch(() => [])
+    ])
+
+    if (records.length > 0) {
+      latestTest.value = records[0]
+    }
+
+    recommendedMaterials.value = materials.slice(0, 2).map(m => ({
+      ...m,
+      typeTag: m.type
+    }))
+  } catch (e) {
+    console.error('加载数据失败', e)
+  }
+})
 
 // 环形进度样式
 function ringStyle(percent) {
@@ -210,8 +244,11 @@ function goSuggestion() {
 
 // 最近测评卡片 → 报告页
 function goReport() {
-  const record = latestTest.value
-  uni.setStorageSync('reportData', record)
+  if (!latestTest.value.id) {
+    uni.showToast({ title: '暂无测评记录', icon: 'none' })
+    return
+  }
+  uni.setStorageSync('reportData', latestTest.value)
   uni.navigateTo({ url: '/pages/report/index' })
 }
 
@@ -231,7 +268,8 @@ function onGradePick() {
     itemList: ['高一', '高二', '高三'],
     success: (res) => {
       const grades = ['高一', '高二', '高三']
-      userInfo.grade = grades[res.tapIndex]
+      userInfo.value.grade = grades[res.tapIndex]
+      uni.setStorageSync('userGrade', grades[res.tapIndex])
     }
   })
 }

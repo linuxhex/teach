@@ -1,5 +1,6 @@
 package com.teacher.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,5 +35,6 @@ public class KnowledgePoint {
 
     @ManyToOne
     @JoinColumn(name = "module_id")
+    @JsonIgnore
     private KnowledgeModule module;
 }

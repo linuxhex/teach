@@ -59,19 +59,19 @@
         <!-- 统计卡片 -->
         <view class="stat-cards">
           <view class="stat-card">
-            <text class="stat-value">256</text>
+            <text class="stat-value">{{ stats.questionCount }}</text>
             <text class="stat-label">题库总数</text>
           </view>
           <view class="stat-card">
-            <text class="stat-value">1,234</text>
+            <text class="stat-value">{{ stats.testCount }}</text>
             <text class="stat-label">测评次数</text>
           </view>
           <view class="stat-card">
-            <text class="stat-value">89</text>
+            <text class="stat-value">{{ stats.activeUsers }}</text>
             <text class="stat-label">活跃用户</text>
           </view>
           <view class="stat-card">
-            <text class="stat-value">68%</text>
+            <text class="stat-value">{{ stats.avgAccuracy }}%</text>
             <text class="stat-label">平均正确率</text>
           </view>
         </view>
@@ -136,26 +136,13 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { getAdminStats } from '@/api/admin.js'
 
 const activeMenu = ref('overview')
 
-const recentRecords = ref([
-  { name: '张三', time: '09-15 14:30', score: '85分', status: '已完成', statusClass: 'done' },
-  { name: '李四', time: '09-15 13:20', score: '72分', status: '已完成', statusClass: 'done' },
-  { name: '王五', time: '09-15 11:05', score: '—', status: '进行中', statusClass: 'ongoing' },
-  { name: '赵六', time: '09-14 16:40', score: '91分', status: '已完成', statusClass: 'done' },
-  { name: '孙七', time: '09-14 15:10', score: '63分', status: '已完成', statusClass: 'done' },
-])
-
-const modules = ref([
-  { name: '集合与逻辑', percent: 85 },
-  { name: '函数与导数', percent: 72 },
-  { name: '三角函数', percent: 68 },
-  { name: '数列', percent: 55 },
-  { name: '立体几何', percent: 48 },
-  { name: '概率统计', percent: 90 },
-])
+const recentRecords = ref([])
+const modules = ref([])
 
 const ruleLevels = reactive([
   { name: '已掌握', desc: '学生已完全掌握该知识点', color: '#27AE60', threshold: '85' },
@@ -164,6 +151,47 @@ const ruleLevels = reactive([
   { name: '未检测', desc: '尚未进行相关测评', color: '#95A5A6', threshold: '0' },
   { name: '暂不适用', desc: '当前教学进度未涉及', color: '#BDC3C7', threshold: '0' },
 ])
+
+const stats = ref({
+  questionCount: 0,
+  testCount: 0,
+  activeUsers: 0,
+  avgAccuracy: 0
+})
+
+onMounted(async () => {
+  try {
+    const data = await getAdminStats()
+    stats.value = {
+      questionCount: data.questionCount || 0,
+      testCount: data.testCount || 0,
+      activeUsers: data.activeUsers || 0,
+      avgAccuracy: data.avgAccuracy || 0
+    }
+
+    if (data.recentRecords) {
+      recentRecords.value = data.recentRecords.map(r => ({
+        name: r.user?.name || '未知',
+        time: r.createdAt ? new Date(r.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '',
+        score: r.score + '分',
+        status: '已完成',
+        statusClass: 'done'
+      }))
+    }
+
+    // 模拟模块数据
+    modules.value = [
+      { name: '集合与逻辑', percent: 85 },
+      { name: '函数与导数', percent: 72 },
+      { name: '三角函数', percent: 68 },
+      { name: '数列', percent: 55 },
+      { name: '立体几何', percent: 48 },
+      { name: '概率统计', percent: 90 },
+    ]
+  } catch (e) {
+    console.error('加载统计数据失败', e)
+  }
+})
 
 function goKnowledge() {
   uni.navigateTo({ url: '/pages/admin/knowledge/index' })
@@ -178,6 +206,7 @@ function goStudent() {
 }
 
 function handleLogout() {
+  uni.removeStorageSync('token')
   uni.removeStorageSync('isLoggedIn')
   uni.removeStorageSync('userRole')
   uni.removeStorageSync('userName')
